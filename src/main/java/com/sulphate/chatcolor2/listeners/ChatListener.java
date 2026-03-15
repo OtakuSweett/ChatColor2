@@ -123,35 +123,34 @@ public class ChatListener implements Listener, Reloadable {
     }
 
     private void colourAndModify(Player player, String message, String colour, AsyncPlayerChatEvent event) {
+        // Plain message for detection (no color codes)
+        String plainMessage = org.bukkit.ChatColor.stripColor(GeneralUtils.colourise(message));
+        event.setMessage(plainMessage);
+
+        // Colored message for display to players
+        String coloredMessage;
         if (GeneralUtils.isDifferentWhenColourised(message)) {
             boolean override = mainConfig.getBoolean(Setting.COLOR_OVERRIDE.getConfigPath());
-
             if (override) {
-                while (GeneralUtils.isDifferentWhenColourised(message)) {
-                    // Strip the colour from the message.
-                    message = org.bukkit.ChatColor.stripColor(GeneralUtils.colourise(message));
-                }
-
-                event.setMessage(message);
+                coloredMessage = GeneralUtils.colourise(message);
+            } else {
+                coloredMessage = GeneralUtils.colourise(message);
             }
-            else {
-                event.setMessage(GeneralUtils.colourise(message));
-            }
-        }
-        else {
+        } else {
             boolean eventSucceeded;
-
             try {
                 eventSucceeded = fireEvent(player, message, colour, event);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 eventSucceeded = false;
             }
-
             if (eventSucceeded) {
-                event.setMessage(generalUtils.colouriseMessage(colour, message, false));
+                coloredMessage = generalUtils.colouriseMessage(colour, message, false);
+            } else {
+                coloredMessage = message;
             }
         }
+        // Format: <name> colored_message
+        event.setFormat("<%1$s> " + coloredMessage);
     }
 
     private String checkColourCodes(String message, Player player) {
